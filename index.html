@@ -324,13 +324,6 @@ channel.on('presence', { event: 'sync' }, () => {
   usersDiv.appendChild(dropdown);
 });
 
-channel.on('broadcast', { event: 'weights' }, (payload) => {
-  W = payload.payload;
-  localStorage.setItem('matrix_w', JSON.stringify(W));
-  applyW();
-  renderDots();
-  if(document.getElementById('listOv').classList.contains('open')) openList();
-});
 channel.on('broadcast', { event: 'cursor' }, (payload) => {
   const data = payload.payload;
   if (data.id === myId) return; // Don't render our own cursor
@@ -375,6 +368,16 @@ channel.on('postgres_changes', { event: '*', schema: 'public', table: 'initiativ
   if(document.getElementById('listOv').classList.contains('open')) openList();
 });
 
+channel.on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, payload => {
+  const { new: newRec } = payload;
+  if (newRec && newRec.id === 'global' && newRec.weights) {
+    W = newRec.weights;
+    applyW();
+    renderDots();
+    if(document.getElementById('listOv').classList.contains('open')) openList();
+  }
+});
+
 channel.subscribe(async (status) => {
   if (status === 'SUBSCRIBED') {
     await channel.track({ id: myId, name: myName, color: myColor });
@@ -397,7 +400,28 @@ document.addEventListener('mousemove', (e) => {
 
 let data=[],editId=null,filters=new Set();
 
-let W = JSON.parse(localStorage.getItem('matrix_w')) || {pe:0.5, re:0.25, cm:0.25, pg:0.5, gs:0.5};
+let W = {pe:0.5, re:0.25, cm:0.25, pg:0.5, gs:0.5};
+
+async function loadWeights() {
+  try {
+    const { data: res, error } = await sb.from('settings').select('weights').eq('id', 'global').single();
+    if (res && res.weights) {
+      W = res.weights;
+      applyW();
+    }
+  } catch (e) {
+    console.error('Could not load weights', e);
+  }
+}
+
+async function saveWeightsToDB(newW) {
+  try {
+    await sb.from('settings').upsert({ id: 'global', weights: newW });
+  } catch (e) {
+    console.error('Could not save weights to DB', e);
+  }
+}
+
 function applyW() {
   document.querySelectorAll('.sw-pe').forEach(e=>e.textContent=(W.pe*100)+'%');
   document.querySelectorAll('.sw-re').forEach(e=>e.textContent=(W.re*100)+'%');
@@ -422,12 +446,13 @@ function saveSettings() {
   if (pe+re+cm !== 100) return alert('Effort weights must sum to 100%');
   if (pg+gs !== 100) return alert('Reward weights must sum to 100%');
   W = {pe: pe/100, re: re/100, cm: cm/100, pg: pg/100, gs: gs/100};
-  localStorage.setItem('matrix_w', JSON.stringify(W));
+  
+  saveWeightsToDB(W);
+  
   applyW();
   renderDots();
   if(document.getElementById('listOv').classList.contains('open')) openList();
   closeOv('settingsOv');
-  if (channel && channel.state === 'joined') channel.send({type: 'broadcast', event: 'weights', payload: W});
 }
 
 function cE(d){return d.pe*W.pe + d.re*W.re + d.cm*W.cm}
@@ -620,6 +645,7 @@ function closeOv(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open')}));
 
 (async()=>{
+  await loadWeights();
   applyW();
   await load();
   renderFilters();
