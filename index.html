@@ -18,6 +18,8 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
 .fbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;min-height:28px}
 .chip{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid #d3d1c7;background:#fff;cursor:pointer;color:#5f5e5a}
 .chip.on{background:#e6f1fb;color:#185fa5;border-color:#85b7eb}
+.status{font-size:11px;color:#888;align-self:center;margin-left:auto}
+.status.err{color:#a32d2d}
 
 .mwrap{position:relative;padding:0 0 26px 34px;user-select:none}
 .ax{position:absolute;font-size:11px;font-weight:600;color:#5f5e5a;white-space:nowrap;pointer-events:none}
@@ -140,7 +142,7 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
     <span class="tick" style="bottom:8px;right:0">High</span>
   </div>
 
-  <div class="footer">Canstar FY26 · Scores persist in your browser · [DRAFT - INTERNAL USE ONLY]</div>
+  <div class="footer">Canstar FY26 · Scores persist via Supabase · [DRAFT - INTERNAL USE ONLY]</div>
 </div>
 
 <div class="tt" id="tt">
@@ -202,49 +204,42 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
 </div>
 
 <script>
-const SK='canstar_v7';
+const SUPABASE_URL='https://egwmntxynozmbimeqogu.supabase.co';
+const SUPABASE_KEY='sb_publishable_xyLMqPWOhOFraXNE8v-Z7A_pZ5xlHOj';
+const REST=SUPABASE_URL+'/rest/v1/initiatives';
+const HDR={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 const COLS=['#378ADD','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#E24B4A','#5F5E5A','#0F6E56','#993C1D','#185FA5','#3B6D11','#993556','#888780','#85B7EB','#EF9F27','#F09995','#378ADD','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#E24B4A'];
-
-const DEF=[
-  {id:'1',name:'Business Loans',pe:6,re:4,cm:5,pg:4,gs:4},
-  {id:'2',name:'Business Insurance',pe:8,re:4,cm:7,pg:2,gs:3},
-  {id:'3',name:'Business Energy',pe:8,re:4,cm:5,pg:3,gs:5},
-  {id:'4',name:'Car Insurance',pe:2,re:2,cm:3,pg:6,gs:5},
-  {id:'5',name:'Home Loans Lean',pe:5,re:5,cm:0,pg:5,gs:7},
-  {id:'6',name:'Personal Loans Lean',pe:7,re:3,cm:0,pg:7,gs:7},
-  {id:'7',name:'Personal Loans Full',pe:7,re:3,cm:5,pg:6,gs:8},
-  {id:'8',name:'Car Loans Full',pe:9,re:4,cm:8,pg:4,gs:7},
-  {id:'9',name:'Home Loans Full',pe:9,re:7,cm:7,pg:5,gs:5},
-  {id:'10',name:'Super Full',pe:8,re:9,cm:9,pg:4,gs:4},
-  {id:'11',name:'Super Lean',pe:8,re:9,cm:9,pg:5,gs:4},
-  {id:'12',name:'Life Insurance Lean',pe:7,re:3,cm:3,pg:6,gs:6},
-  {id:'13',name:'Life Insurance Full',pe:7,re:3,cm:9,pg:6,gs:6},
-  {id:'14',name:'Term Deposits',pe:8,re:8,cm:5,pg:5,gs:4},
-  {id:'15',name:'Online Share Trading',pe:5,re:3,cm:7,pg:5,gs:6},
-  {id:'16',name:'Deposit Accounts',pe:7,re:6,cm:5,pg:3,gs:4},
-  {id:'17',name:'Online Banking',pe:6,re:2,cm:5,pg:4,gs:4},
-  {id:'18',name:'Travel Products',pe:8,re:6,cm:5,pg:1,gs:3},
-  {id:'19',name:'Credit Cards Content',pe:1,re:0,cm:5,pg:1,gs:2},
-  {id:'20',name:'Travel Insurance Content',pe:0,re:0,cm:3,pg:3,gs:6},
-  {id:'21',name:'New Product Cards',pe:7,re:3,cm:2,pg:1,gs:1},
-  {id:'22',name:'Customer Ratings',pe:10,re:0,cm:7,pg:1,gs:1},
-  {id:'23',name:'Home Page Redesign',pe:3,re:0,cm:6,pg:1,gs:2},
-  {id:'24',name:'Blue Long-tail',pe:1,re:1,cm:7,pg:1,gs:0},
-  {id:'25',name:'Travel Insurance NZ',pe:3,re:1,cm:2,pg:4,gs:5},
-  {id:'26',name:'Credit Cards NZ',pe:2,re:1,cm:2,pg:1,gs:0}
-];
 
 let data=[],editId=null,filters=new Set();
 function cE(d){return d.pe*0.5+d.re*0.25+d.cm*0.25}
 function cR(d){return d.pg*0.5+d.gs*0.5}
 function cRank(d){return((10-cE(d))+cR(d)).toFixed(2)}
-function col(id){return COLS[(parseInt(id)-1)%COLS.length]}
+function col(id){let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0;return COLS[h%COLS.length]}
 
-function load(){
-  try{const r=localStorage.getItem(SK);data=r?JSON.parse(r):JSON.parse(JSON.stringify(DEF));if(!r)persist();}
-  catch(e){data=JSON.parse(JSON.stringify(DEF));}
+async function load(){
+  try{
+    const r=await fetch(REST+'?select=*',{headers:HDR});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    data=await r.json();
+  }catch(e){
+    console.error('load failed',e);
+    alert('Could not load from Supabase. Check console.');
+    data=[];
+  }
 }
-function persist(){try{localStorage.setItem(SK,JSON.stringify(data));}catch(e){}}
+async function apiInsert(row){
+  const r=await fetch(REST,{method:'POST',headers:HDR,body:JSON.stringify(row)});
+  if(!r.ok)throw new Error('insert HTTP '+r.status+' '+await r.text());
+  return(await r.json())[0];
+}
+async function apiUpdate(id,patch){
+  const r=await fetch(REST+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:HDR,body:JSON.stringify(patch)});
+  if(!r.ok)throw new Error('update HTTP '+r.status+' '+await r.text());
+}
+async function apiDelete(id){
+  const r=await fetch(REST+'?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:HDR});
+  if(!r.ok)throw new Error('delete HTTP '+r.status+' '+await r.text());
+}
 
 function getCats(){
   const s=new Set();
@@ -348,26 +343,46 @@ function nu(){
   document.getElementById('nc-e').textContent=(pe*0.5+re*0.25+cm*0.25).toFixed(2);
   document.getElementById('nc-r').textContent=(pg*0.5+gs*0.5).toFixed(2);
 }
-function saveEdit(){
+async function saveEdit(){
   const idx=data.findIndex(x=>x.id===editId);if(idx<0)return;
   const newName=document.getElementById('etitle').value.trim();
-  if(newName)data[idx].name=newName;
-  ['pe','re','cm','pg','gs'].forEach(k=>data[idx][k]=+document.getElementById('e-'+k).value);
-  persist();renderDots();renderFilters();closeOv('editOv');
+  const patch={name:newName||data[idx].name};
+  ['pe','re','cm','pg','gs'].forEach(k=>patch[k]=+document.getElementById('e-'+k).value);
+  patch.updated_at=new Date().toISOString();
+  try{
+    await apiUpdate(editId,patch);
+    Object.assign(data[idx],patch);
+    renderDots();renderFilters();closeOv('editOv');
+  }catch(e){console.error(e);alert('Save failed: '+e.message);}
 }
-function delItem(){
+async function delItem(){
   const d=data.find(x=>x.id===editId);
   if(!d||!confirm('Delete "'+d.name+'"?'))return;
-  data=data.filter(x=>x.id!==editId);
-  persist();renderDots();renderFilters();closeOv('editOv');
+  try{
+    await apiDelete(editId);
+    data=data.filter(x=>x.id!==editId);
+    renderDots();renderFilters();closeOv('editOv');
+  }catch(e){console.error(e);alert('Delete failed: '+e.message);}
 }
 function openAdd(){document.getElementById('addOv').classList.add('open')}
-function addItem(){
+async function addItem(){
   const name=document.getElementById('nn').value.trim();
   if(!name){alert('Please enter a name');return;}
-  data.push({id:String(Date.now()),name,pe:+document.getElementById('n-pe').value,re:+document.getElementById('n-re').value,cm:+document.getElementById('n-cm').value,pg:+document.getElementById('n-pg').value,gs:+document.getElementById('n-gs').value});
-  persist();renderDots();renderFilters();closeOv('addOv');
-  document.getElementById('nn').value='';
+  const row={
+    id:String(Date.now()),
+    name,
+    pe:+document.getElementById('n-pe').value,
+    re:+document.getElementById('n-re').value,
+    cm:+document.getElementById('n-cm').value,
+    pg:+document.getElementById('n-pg').value,
+    gs:+document.getElementById('n-gs').value
+  };
+  try{
+    const saved=await apiInsert(row);
+    data.push(saved);
+    renderDots();renderFilters();closeOv('addOv');
+    document.getElementById('nn').value='';
+  }catch(e){console.error(e);alert('Add failed: '+e.message);}
 }
 function openList(){
   const b=document.getElementById('listBody');b.innerHTML='';
@@ -382,9 +397,11 @@ function openList(){
 function closeOv(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open')}));
 
-load();
-renderFilters();
-renderDots();
+(async()=>{
+  await load();
+  renderFilters();
+  renderDots();
+})();
 </script>
 </body>
 </html>
