@@ -116,6 +116,7 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
       <span class="tl">FY26 initiative prioritisation</span>
       <span class="badge">Q4 planning</span>
       <div id="onlineUsers" class="online-users" style="margin-left: 8px; display: none;"></div>
+      <input type="text" id="myNameInput" title="Your Display Name" style="margin-left: 8px; font-size: 11px; padding: 3px 8px; border-radius: 12px; border: 1px solid #d3d1c7; width: 90px; outline: none; background: #fff; color: #5f5e5a; font-weight: 600;" />
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn" onclick="openAdd()">+ Add</button>
@@ -227,9 +228,21 @@ const myId = 'user-' + Math.random().toString(36).substring(2, 9);
 const myColor = COLS[Math.floor(Math.random() * COLS.length)];
 let myName = localStorage.getItem('matrix_name');
 if (!myName) {
-  myName = prompt("Enter your name for multiplayer:", "User " + Math.floor(Math.random() * 100)) || "Anonymous";
+  myName = "User " + Math.floor(Math.random() * 1000);
   localStorage.setItem('matrix_name', myName);
 }
+
+const nameInputEl = document.getElementById('myNameInput');
+nameInputEl.value = myName;
+nameInputEl.addEventListener('change', async (e) => {
+  myName = e.target.value.trim() || "User " + Math.floor(Math.random() * 1000);
+  nameInputEl.value = myName;
+  localStorage.setItem('matrix_name', myName);
+  // Re-broadcast presence with new name
+  if (channel.state === 'joined') {
+    await channel.track({ id: myId, name: myName, color: myColor });
+  }
+});
 
 const channel = sb.channel('matrix-room', {
   config: { presence: { key: myId } }
