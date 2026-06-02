@@ -297,6 +297,24 @@ channel.on('broadcast', { event: 'cursor' }, (payload) => {
   cursorEl.style.transform = `translate(${data.x}px, ${data.y}px)`;
 });
 
+channel.on('postgres_changes', { event: '*', schema: 'public', table: 'initiatives' }, payload => {
+  const { eventType, new: newRec, old: oldRec } = payload;
+  
+  if (eventType === 'INSERT') {
+    data.push(newRec);
+  } else if (eventType === 'UPDATE') {
+    const idx = data.findIndex(x => x.id === newRec.id);
+    if (idx >= 0) data[idx] = newRec;
+  } else if (eventType === 'DELETE') {
+    data = data.filter(x => x.id !== oldRec.id);
+  }
+  
+  data.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  renderFilters();
+  renderDots();
+  if(document.getElementById('listOv').classList.contains('open')) openList();
+});
+
 channel.subscribe(async (status) => {
   if (status === 'SUBSCRIBED') {
     await channel.track({ id: myId, name: myName, color: myColor });
@@ -336,20 +354,6 @@ async function load(){
   }
 }
 
-async function poll(){
-  try{
-    const r=await fetch(REST+'?select=*',{headers:HDR});
-    if(!r.ok)return;
-    let newData=await r.json();
-    newData.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-    if(JSON.stringify(newData)!==JSON.stringify(data)){
-      data=newData;
-      renderFilters();
-      renderDots();
-      if(document.getElementById('listOv').classList.contains('open')) openList();
-    }
-  }catch(e){}
-}
 async function apiInsert(row){
   const r=await fetch(REST,{method:'POST',headers:HDR,body:JSON.stringify(row)});
   if(!r.ok)throw new Error('insert HTTP '+r.status+' '+await r.text());
@@ -524,7 +528,6 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(
   await load();
   renderFilters();
   renderDots();
-  setInterval(poll, APP_CONFIG.pollingIntervalMs);
 })();
 </script>
 </body>
