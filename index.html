@@ -5,9 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FY26 Initiative Prioritisation Matrix</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;justify-content:center;padding:24px 16px}
+* {box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;justify-content:center;padding:24px 16px;overflow-x:hidden;}
 #app{width:100%;max-width:900px}
+
+/* Multiplayer Styles */
+.m-cursor { position: absolute; pointer-events: none; z-index: 9999; display: flex; align-items: flex-start; gap: 4px; transition: transform 0.05s linear; left: 0; top: 0; }
+.m-cursor svg { width: 18px; height: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+.m-name { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap; margin-top: 10px; }
+.online-users { display: flex; align-items: center; gap: 4px; background: #fff; padding: 4px 8px; border-radius: 20px; border: 1px solid #d3d1c7; font-size: 11px; font-weight: 600; color: #5f5e5a; position: relative; cursor: default; }
+.user-list-dropdown { display: none; position: absolute; top: 100%; right: 0; margin-top: 6px; background: #fff; border: 1px solid #d3d1c7; border-radius: 8px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 160px; flex-direction: column; gap: 6px; }
+.online-users:hover .user-list-dropdown { display: flex; }
+.user-list-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-list-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.user-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-left: -6px; }
+.user-dot:first-child { margin-left: 0; }
 .toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}
 .tl{font-size:15px;font-weight:600;color:#1a1a1a}
 .badge{font-size:11px;padding:2px 8px;border-radius:6px;background:#f0efe8;color:#5f5e5a;border:1px solid #d3d1c7}
@@ -107,6 +119,8 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span class="tl">FY26 initiative prioritisation</span>
       <span class="badge">Q4 planning</span>
+      <div id="onlineUsers" class="online-users" style="margin-left: 8px; display: none;"></div>
+      <input type="text" id="myNameInput" title="Your Display Name" style="margin-left: 8px; font-size: 11px; padding: 3px 8px; border-radius: 12px; border: 1px solid #d3d1c7; width: 90px; outline: none; background: #fff; color: #5f5e5a; font-weight: 600;" />
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn" onclick="openAdd()">+ Add</button>
@@ -203,6 +217,7 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
   </div>
 </div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
 const SUPABASE_URL='https://egwmntxynozmbimeqogu.supabase.co';
@@ -210,6 +225,148 @@ const SUPABASE_KEY='sb_publishable_xyLMqPWOhOFraXNE8v-Z7A_pZ5xlHOj';
 const REST=SUPABASE_URL+'/rest/v1/initiatives';
 const HDR={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 const COLS=['#378ADD','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#E24B4A','#5F5E5A','#0F6E56','#993C1D','#185FA5','#3B6D11','#993556','#888780','#85B7EB','#EF9F27','#F09995','#378ADD','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#E24B4A'];
+
+// Multiplayer Setup
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const myId = 'user-' + Math.random().toString(36).substring(2, 9);
+const myColor = COLS[Math.floor(Math.random() * COLS.length)];
+let myName = localStorage.getItem('matrix_name');
+if (!myName) {
+  myName = "User " + Math.floor(Math.random() * 1000);
+  localStorage.setItem('matrix_name', myName);
+}
+
+const nameInputEl = document.getElementById('myNameInput');
+nameInputEl.value = myName;
+nameInputEl.addEventListener('change', async (e) => {
+  myName = e.target.value.trim() || "User " + Math.floor(Math.random() * 1000);
+  nameInputEl.value = myName;
+  localStorage.setItem('matrix_name', myName);
+  // Re-broadcast presence with new name
+  if (channel.state === 'joined') {
+    await channel.track({ id: myId, name: myName, color: myColor });
+  }
+});
+
+const channel = sb.channel('matrix-room', {
+  config: { presence: { key: myId } }
+});
+
+const cursors = {};
+
+channel.on('presence', { event: 'sync' }, () => {
+  const state = channel.presenceState();
+  const usersDiv = document.getElementById('onlineUsers');
+  usersDiv.innerHTML = '';
+  usersDiv.style.display = 'flex';
+  
+  let count = 0;
+  const activeIds = [];
+  const userList = [];
+  
+  for (const [key, presences] of Object.entries(state)) {
+    if (presences.length > 0) {
+      count++;
+      const p = presences[0];
+      activeIds.push(p.id);
+      userList.push(p);
+      const dot = document.createElement('div');
+      dot.className = 'user-dot';
+      dot.style.background = p.color;
+      dot.title = p.name;
+      usersDiv.appendChild(dot);
+    }
+  }
+  
+  // Cleanup cursors for users who have disconnected
+  for (const id in cursors) {
+    if (!activeIds.includes(id)) {
+      if (cursors[id]) {
+        cursors[id].remove();
+      }
+      delete cursors[id];
+    }
+  }
+  
+  const span = document.createElement('span');
+  span.style.marginLeft = '4px';
+  span.textContent = count + ' online';
+  usersDiv.appendChild(span);
+  
+  const dropdown = document.createElement('div');
+  dropdown.className = 'user-list-dropdown';
+  userList.forEach(u => {
+    const item = document.createElement('div');
+    item.className = 'user-list-item';
+    item.innerHTML = `<span class="user-list-dot" style="background:${u.color}"></span>${u.name} ${u.id === myId ? '<span style="color:#888;font-size:10px;margin-left:4px">(You)</span>' : ''}`;
+    dropdown.appendChild(item);
+  });
+  usersDiv.appendChild(dropdown);
+});
+
+channel.on('broadcast', { event: 'cursor' }, (payload) => {
+  const data = payload.payload;
+  if (data.id === myId) return; // Don't render our own cursor
+
+  let cursorEl = document.getElementById('cursor-' + data.id);
+  if (!cursorEl) {
+    cursorEl = document.createElement('div');
+    cursorEl.id = 'cursor-' + data.id;
+    cursorEl.className = 'm-cursor';
+    cursorEl.innerHTML = `
+      <svg viewBox="0 0 24 24" style="fill: ${data.color}">
+        <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.45 0 .67-.54.35-.85L6.35 2.85a.5.5 0 0 0-.85.36Z" />
+      </svg>
+      <div class="m-name" style="background: ${data.color}">${data.name}</div>
+    `;
+    document.body.appendChild(cursorEl);
+    cursors[data.id] = cursorEl;
+  }
+  
+  cursorEl.style.transform = `translate(${data.x}px, ${data.y}px)`;
+  const nameDiv = cursorEl.querySelector('.m-name');
+  if (nameDiv && nameDiv.textContent !== data.name) {
+    nameDiv.textContent = data.name;
+  }
+});
+
+channel.on('postgres_changes', { event: '*', schema: 'public', table: 'initiatives' }, payload => {
+  const { eventType, new: newRec, old: oldRec } = payload;
+  
+  if (eventType === 'INSERT') {
+    data.push(newRec);
+  } else if (eventType === 'UPDATE') {
+    const idx = data.findIndex(x => x.id === newRec.id);
+    if (idx >= 0) data[idx] = newRec;
+  } else if (eventType === 'DELETE') {
+    data = data.filter(x => x.id !== oldRec.id);
+  }
+  
+  data.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  renderFilters();
+  renderDots();
+  if(document.getElementById('listOv').classList.contains('open')) openList();
+});
+
+channel.subscribe(async (status) => {
+  if (status === 'SUBSCRIBED') {
+    await channel.track({ id: myId, name: myName, color: myColor });
+  }
+});
+
+// Throttle mousemove events to not spam the network
+let lastMove = 0;
+document.addEventListener('mousemove', (e) => {
+  const now = Date.now();
+  if (now - lastMove > 40) { // ~25 fps max
+    lastMove = now;
+    channel.send({
+      type: 'broadcast',
+      event: 'cursor',
+      payload: { id: myId, name: myName, color: myColor, x: e.pageX, y: e.pageY }
+    });
+  }
+});
 
 let data=[],editId=null,filters=new Set();
 function cE(d){return d.pe*0.5+d.re*0.25+d.cm*0.25}
@@ -230,20 +387,6 @@ async function load(){
   }
 }
 
-async function poll(){
-  try{
-    const r=await fetch(REST+'?select=*',{headers:HDR});
-    if(!r.ok)return;
-    let newData=await r.json();
-    newData.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-    if(JSON.stringify(newData)!==JSON.stringify(data)){
-      data=newData;
-      renderFilters();
-      renderDots();
-      if(document.getElementById('listOv').classList.contains('open')) openList();
-    }
-  }catch(e){}
-}
 async function apiInsert(row){
   const r=await fetch(REST,{method:'POST',headers:HDR,body:JSON.stringify(row)});
   if(!r.ok)throw new Error('insert HTTP '+r.status+' '+await r.text());
@@ -418,7 +561,6 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(
   await load();
   renderFilters();
   renderDots();
-  setInterval(poll, APP_CONFIG.pollingIntervalMs);
 })();
 </script>
 </body>
