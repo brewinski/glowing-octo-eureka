@@ -15,7 +15,7 @@ CREATE TABLE initiatives_rel (
 CREATE TABLE scores_rel (
     initiative_id text REFERENCES initiatives_rel(id) ON DELETE CASCADE,
     category_id text REFERENCES categories_rel(id) ON DELETE CASCADE,
-    score integer NOT NULL CHECK (score >= 1 AND score <= 10),
+    score integer NOT NULL CHECK (score >= 0 AND score <= 10),
     PRIMARY KEY (initiative_id, category_id)
 );
 
