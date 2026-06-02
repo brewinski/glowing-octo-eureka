@@ -308,6 +308,10 @@ channel.on('broadcast', { event: 'cursor' }, (payload) => {
   }
   
   cursorEl.style.transform = `translate(${data.x}px, ${data.y}px)`;
+  const nameDiv = cursorEl.querySelector('.m-name');
+  if (nameDiv && nameDiv.textContent !== data.name) {
+    nameDiv.textContent = data.name;
+  }
 });
 
 channel.on('postgres_changes', { event: '*', schema: 'public', table: 'initiatives' }, payload => {
