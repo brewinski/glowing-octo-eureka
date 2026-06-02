@@ -221,7 +221,7 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
 <script>
 const SUPABASE_URL='https://egwmntxynozmbimeqogu.supabase.co';
 const SUPABASE_KEY='sb_publishable_xyLMqPWOhOFraXNE8v-Z7A_pZ5xlHOj';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const COLS=['#378ADD','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#E24B4A','#5F5E5A','#0F6E56','#993C1D','#185FA5','#3B6D11','#993556','#888780','#85B7EB','#EF9F27','#F09995','#378ADD','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#E24B4A'];
 
 let data=[],editId=null,filters=new Set();
@@ -229,7 +229,7 @@ let session = null;
 
 // Auth UI logic
 async function checkAuth() {
-  const { data: { session: currentSession } } = await supabase.auth.getSession();
+  const { data: { session: currentSession } } = await sb.auth.getSession();
   session = currentSession;
   
   if (session) {
@@ -243,7 +243,7 @@ async function checkAuth() {
   }
 
   // Listen for login/logout events
-  supabase.auth.onAuthStateChange((_event, newSession) => {
+  sb.auth.onAuthStateChange((_event, newSession) => {
     session = newSession;
     if (session) {
       document.getElementById('loginOverlay').style.display = 'none';
@@ -266,7 +266,7 @@ async function handleLogin() {
   msgEl.style.color = '#5f5e5a';
   msgEl.textContent = 'Logging in...';
   
-  const { error } = await supabase.auth.signInWithPassword({
+  const { error } = await sb.auth.signInWithPassword({
     email: email,
     password: password,
   });
@@ -278,7 +278,7 @@ async function handleLogin() {
 }
 
 async function handleLogout() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
 }
 
 function cE(d){return d.pe*0.5+d.re*0.25+d.cm*0.25}
@@ -290,7 +290,7 @@ async function load(){
   if(!session) return;
   try{
     // Using Supabase SDK makes authenticated requests automatically
-    const { data: fetchedData, error } = await supabase
+    const { data: fetchedData, error } = await sb
       .from('initiatives')
       .select('*');
       
@@ -304,7 +304,7 @@ async function load(){
   }
 }
 async function apiInsert(row){
-  const { data: savedData, error } = await supabase
+  const { data: savedData, error } = await sb
     .from('initiatives')
     .insert([row])
     .select();
@@ -312,14 +312,14 @@ async function apiInsert(row){
   return savedData[0];
 }
 async function apiUpdate(id,patch){
-  const { error } = await supabase
+  const { error } = await sb
     .from('initiatives')
     .update(patch)
     .eq('id', id);
   if(error) throw error;
 }
 async function apiDelete(id){
-  const { error } = await supabase
+  const { error } = await sb
     .from('initiatives')
     .delete()
     .eq('id', id);
@@ -329,7 +329,7 @@ async function apiDelete(id){
 async function poll(){
   if(!session) return;
   try{
-    const { data: fetchedData, error } = await supabase
+    const { data: fetchedData, error } = await sb
       .from('initiatives')
       .select('*');
     if(error) return;
