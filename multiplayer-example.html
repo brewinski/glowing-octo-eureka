@@ -244,15 +244,28 @@ channel.on('presence', { event: 'sync' }, () => {
   usersDiv.style.display = 'flex';
   
   let count = 0;
+  const activeIds = [];
+  
   for (const [key, presences] of Object.entries(state)) {
     if (presences.length > 0) {
       count++;
       const p = presences[0];
+      activeIds.push(p.id);
       const dot = document.createElement('div');
       dot.className = 'user-dot';
       dot.style.background = p.color;
       dot.title = p.name;
       usersDiv.appendChild(dot);
+    }
+  }
+  
+  // Cleanup cursors for users who have disconnected
+  for (const id in cursors) {
+    if (!activeIds.includes(id)) {
+      if (cursors[id]) {
+        cursors[id].remove();
+      }
+      delete cursors[id];
     }
   }
   
@@ -282,13 +295,6 @@ channel.on('broadcast', { event: 'cursor' }, (payload) => {
   }
   
   cursorEl.style.transform = `translate(${data.x}px, ${data.y}px)`;
-  
-  // Cleanup cursor if no movement after 5 seconds
-  clearTimeout(cursorEl.timeout);
-  cursorEl.timeout = setTimeout(() => {
-    cursorEl.remove();
-    delete cursors[data.id];
-  }, 5000);
 });
 
 channel.subscribe(async (status) => {
@@ -306,7 +312,7 @@ document.addEventListener('mousemove', (e) => {
     channel.send({
       type: 'broadcast',
       event: 'cursor',
-      payload: { id: myId, name: myName, color: myColor, x: e.clientX, y: e.clientY }
+      payload: { id: myId, name: myName, color: myColor, x: e.pageX, y: e.pageY }
     });
   }
 });
