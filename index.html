@@ -123,6 +123,7 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
       <input type="text" id="myNameInput" title="Your Display Name" style="margin-left: 8px; font-size: 11px; padding: 3px 8px; border-radius: 12px; border: 1px solid #d3d1c7; width: 90px; outline: none; background: #fff; color: #5f5e5a; font-weight: 600;" />
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn" onclick="openSettings()">⚙️ Weights</button>
       <button class="btn" onclick="openAdd()">+ Add</button>
       <button class="btn" onclick="openList()">☰ All initiatives</button>
     </div>
@@ -171,13 +172,13 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
   <div class="modal">
     <div class="mh"><div style="flex:1;margin-right:12px"><label style="font-size:11px;color:#5f5e5a;display:block;margin-bottom:4px;font-weight:600">Initiative name</label><input type="text" id="etitle" style="width:100%;font-size:14px;font-weight:600;padding:5px 8px;border:1px solid #b4b2a9;border-radius:6px;outline:none;color:#1a1a1a"></div><button class="xb" onclick="closeOv('editOv')">✕</button></div>
     <div class="sh">Effort score <span style="font-weight:400;color:#aaa">(higher = more effort)</span></div>
-    <div class="srow"><span class="sl">Product engineering</span><span class="sw">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-pe" oninput="eu()"><span class="snum" id="ev-pe">5</span></div>
-    <div class="srow"><span class="sl">Research</span><span class="sw">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-re" oninput="eu()"><span class="snum" id="ev-re">5</span></div>
-    <div class="srow"><span class="sl">Content / Marketing</span><span class="sw">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-cm" oninput="eu()"><span class="snum" id="ev-cm">5</span></div>
+    <div class="srow"><span class="sl">Product engineering</span><span class="sw sw-pe">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-pe" oninput="eu()"><span class="snum" id="ev-pe">5</span></div>
+    <div class="srow"><span class="sl">Research</span><span class="sw sw-re">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-re" oninput="eu()"><span class="snum" id="ev-re">5</span></div>
+    <div class="srow"><span class="sl">Content / Marketing</span><span class="sw sw-cm">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-cm" oninput="eu()"><span class="snum" id="ev-cm">5</span></div>
     <div class="cbox"><span class="cbl">Computed effort</span><span class="cbv" id="ec-e">—</span></div>
     <div class="sh">Reward score <span style="font-weight:400;color:#aaa">(higher = bigger opportunity)</span></div>
-    <div class="srow"><span class="sl">SEO Growth Score</span><span class="sw">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-pg" oninput="eu()"><span class="snum" id="ev-pg">5</span></div>
-    <div class="srow"><span class="sl">Commercial Growth Score</span><span class="sw">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-gs" oninput="eu()"><span class="snum" id="ev-gs">5</span></div>
+    <div class="srow"><span class="sl">SEO Growth Score</span><span class="sw sw-pg">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-pg" oninput="eu()"><span class="snum" id="ev-pg">5</span></div>
+    <div class="srow"><span class="sl">Commercial Growth Score</span><span class="sw sw-gs">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="e-gs" oninput="eu()"><span class="snum" id="ev-gs">5</span></div>
     <div class="cbox"><span class="cbl">Computed reward</span><span class="cbv" id="ec-r">—</span></div>
     <div class="mfoot">
       <button class="btn btn-d" onclick="delItem()">🗑 Delete</button>
@@ -195,17 +196,36 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
       <input type="text" id="nn" placeholder="e.g. Home Insurance" style="width:100%;font-size:13px;padding:6px 8px;border:1px solid #b4b2a9;border-radius:6px;outline:none">
     </div>
     <div class="sh">Effort score</div>
-    <div class="srow"><span class="sl">Product engineering</span><span class="sw">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-pe" value="5" oninput="nu()"><span class="snum" id="nv-pe">5</span></div>
-    <div class="srow"><span class="sl">Research</span><span class="sw">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-re" value="5" oninput="nu()"><span class="snum" id="nv-re">5</span></div>
-    <div class="srow"><span class="sl">Content / Marketing</span><span class="sw">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-cm" value="5" oninput="nu()"><span class="snum" id="nv-cm">5</span></div>
+    <div class="srow"><span class="sl">Product engineering</span><span class="sw sw-pe">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-pe" value="5" oninput="nu()"><span class="snum" id="nv-pe">5</span></div>
+    <div class="srow"><span class="sl">Research</span><span class="sw sw-re">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-re" value="5" oninput="nu()"><span class="snum" id="nv-re">5</span></div>
+    <div class="srow"><span class="sl">Content / Marketing</span><span class="sw sw-cm">25%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-cm" value="5" oninput="nu()"><span class="snum" id="nv-cm">5</span></div>
     <div class="cbox"><span class="cbl">Computed effort</span><span class="cbv" id="nc-e">5.00</span></div>
     <div class="sh">Reward score</div>
-    <div class="srow"><span class="sl">SEO Growth Score</span><span class="sw">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-pg" value="5" oninput="nu()"><span class="snum" id="nv-pg">5</span></div>
-    <div class="srow"><span class="sl">Commercial Growth Score</span><span class="sw">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-gs" value="5" oninput="nu()"><span class="snum" id="nv-gs">5</span></div>
+    <div class="srow"><span class="sl">SEO Growth Score</span><span class="sw sw-pg">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-pg" value="5" oninput="nu()"><span class="snum" id="nv-pg">5</span></div>
+    <div class="srow"><span class="sl">Commercial Growth Score</span><span class="sw sw-gs">50%</span><input type="range" style="flex:0 0 110px" min="1" max="10" step="1" id="n-gs" value="5" oninput="nu()"><span class="snum" id="nv-gs">5</span></div>
     <div class="cbox"><span class="cbl">Computed reward</span><span class="cbv" id="nc-r">5.00</span></div>
     <div class="mfoot">
       <button class="btn" onclick="closeOv('addOv')">Cancel</button>
       <button class="btn btn-p" onclick="addItem()">+ Add to matrix</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="ov" id="settingsOv">
+  <div class="modal">
+    <div class="mh"><div><div class="mt">Score Weights</div><div class="ms">Adjust how effort and reward are calculated</div></div><button class="xb" onclick="closeOv('settingsOv')">✕</button></div>
+    <div class="sh">Effort Weights (Must sum to 100%)</div>
+    <div class="srow"><span class="sl">Product engineering</span><input type="number" id="w-pe" style="width:60px;padding:4px;border:1px solid #b4b2a9;border-radius:4px" value="50"></div>
+    <div class="srow"><span class="sl">Research</span><input type="number" id="w-re" style="width:60px;padding:4px;border:1px solid #b4b2a9;border-radius:4px" value="25"></div>
+    <div class="srow"><span class="sl">Content / Marketing</span><input type="number" id="w-cm" style="width:60px;padding:4px;border:1px solid #b4b2a9;border-radius:4px" value="25"></div>
+    
+    <div class="sh" style="margin-top:16px">Reward Weights (Must sum to 100%)</div>
+    <div class="srow"><span class="sl">SEO Growth Score</span><input type="number" id="w-pg" style="width:60px;padding:4px;border:1px solid #b4b2a9;border-radius:4px" value="50"></div>
+    <div class="srow"><span class="sl">Commercial Growth Score</span><input type="number" id="w-gs" style="width:60px;padding:4px;border:1px solid #b4b2a9;border-radius:4px" value="50"></div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeOv('settingsOv')">Cancel</button>
+      <button class="btn btn-p" onclick="saveSettings()">✓ Save</button>
     </div>
   </div>
 </div>
@@ -304,6 +324,13 @@ channel.on('presence', { event: 'sync' }, () => {
   usersDiv.appendChild(dropdown);
 });
 
+channel.on('broadcast', { event: 'weights' }, (payload) => {
+  W = payload.payload;
+  localStorage.setItem('matrix_w', JSON.stringify(W));
+  applyW();
+  renderDots();
+  if(document.getElementById('listOv').classList.contains('open')) openList();
+});
 channel.on('broadcast', { event: 'cursor' }, (payload) => {
   const data = payload.payload;
   if (data.id === myId) return; // Don't render our own cursor
@@ -369,8 +396,43 @@ document.addEventListener('mousemove', (e) => {
 });
 
 let data=[],editId=null,filters=new Set();
-function cE(d){return d.pe*0.5+d.re*0.25+d.cm*0.25}
-function cR(d){return d.pg*0.5+d.gs*0.5}
+
+let W = JSON.parse(localStorage.getItem('matrix_w')) || {pe:0.5, re:0.25, cm:0.25, pg:0.5, gs:0.5};
+function applyW() {
+  document.querySelectorAll('.sw-pe').forEach(e=>e.textContent=(W.pe*100)+'%');
+  document.querySelectorAll('.sw-re').forEach(e=>e.textContent=(W.re*100)+'%');
+  document.querySelectorAll('.sw-cm').forEach(e=>e.textContent=(W.cm*100)+'%');
+  document.querySelectorAll('.sw-pg').forEach(e=>e.textContent=(W.pg*100)+'%');
+  document.querySelectorAll('.sw-gs').forEach(e=>e.textContent=(W.gs*100)+'%');
+}
+function openSettings() {
+  document.getElementById('w-pe').value = Math.round(W.pe * 100);
+  document.getElementById('w-re').value = Math.round(W.re * 100);
+  document.getElementById('w-cm').value = Math.round(W.cm * 100);
+  document.getElementById('w-pg').value = Math.round(W.pg * 100);
+  document.getElementById('w-gs').value = Math.round(W.gs * 100);
+  document.getElementById('settingsOv').classList.add('open');
+}
+function saveSettings() {
+  const pe = +document.getElementById('w-pe').value;
+  const re = +document.getElementById('w-re').value;
+  const cm = +document.getElementById('w-cm').value;
+  const pg = +document.getElementById('w-pg').value;
+  const gs = +document.getElementById('w-gs').value;
+  if (pe+re+cm !== 100) return alert('Effort weights must sum to 100%');
+  if (pg+gs !== 100) return alert('Reward weights must sum to 100%');
+  W = {pe: pe/100, re: re/100, cm: cm/100, pg: pg/100, gs: gs/100};
+  localStorage.setItem('matrix_w', JSON.stringify(W));
+  applyW();
+  renderDots();
+  if(document.getElementById('listOv').classList.contains('open')) openList();
+  closeOv('settingsOv');
+  if (channel && channel.state === 'joined') channel.send({type: 'broadcast', event: 'weights', payload: W});
+}
+
+function cE(d){return d.pe*W.pe + d.re*W.re + d.cm*W.cm}
+function cR(d){return d.pg*W.pg + d.gs*W.gs}
+
 function cRank(d){return((10-cE(d))+cR(d)).toFixed(2)}
 function col(id){let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0;return COLS[h%COLS.length]}
 
@@ -493,15 +555,15 @@ function eu(){
 function ec(){
   const pe=+document.getElementById('e-pe').value,re=+document.getElementById('e-re').value,cm=+document.getElementById('e-cm').value;
   const pg=+document.getElementById('e-pg').value,gs=+document.getElementById('e-gs').value;
-  document.getElementById('ec-e').textContent=(pe*0.5+re*0.25+cm*0.25).toFixed(2);
-  document.getElementById('ec-r').textContent=(pg*0.5+gs*0.5).toFixed(2);
+  document.getElementById('ec-e').textContent=(pe*W.pe+re*W.re+cm*W.cm).toFixed(2);
+  document.getElementById('ec-r').textContent=(pg*W.pg+gs*W.gs).toFixed(2);
 }
 function nu(){
   ['pe','re','cm','pg','gs'].forEach(k=>document.getElementById('nv-'+k).textContent=document.getElementById('n-'+k).value);
   const pe=+document.getElementById('n-pe').value,re=+document.getElementById('n-re').value,cm=+document.getElementById('n-cm').value;
   const pg=+document.getElementById('n-pg').value,gs=+document.getElementById('n-gs').value;
-  document.getElementById('nc-e').textContent=(pe*0.5+re*0.25+cm*0.25).toFixed(2);
-  document.getElementById('nc-r').textContent=(pg*0.5+gs*0.5).toFixed(2);
+  document.getElementById('nc-e').textContent=(pe*W.pe+re*W.re+cm*W.cm).toFixed(2);
+  document.getElementById('nc-r').textContent=(pg*W.pg+gs*W.gs).toFixed(2);
 }
 async function saveEdit(){
   const idx=data.findIndex(x=>x.id===editId);if(idx<0)return;
@@ -558,6 +620,7 @@ function closeOv(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open')}));
 
 (async()=>{
+  applyW();
   await load();
   renderFilters();
   renderDots();
