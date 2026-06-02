@@ -203,6 +203,7 @@ body{font-family:sans-serif;background:#f5f4f0;min-height:100vh;display:flex;jus
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
 const SUPABASE_URL='https://egwmntxynozmbimeqogu.supabase.co';
 const SUPABASE_KEY='sb_publishable_xyLMqPWOhOFraXNE8v-Z7A_pZ5xlHOj';
@@ -417,7 +418,7 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',function(
   await load();
   renderFilters();
   renderDots();
-  setInterval(poll, 3000);
+  setInterval(poll, APP_CONFIG.pollingIntervalMs);
 })();
 </script>
 </body>
